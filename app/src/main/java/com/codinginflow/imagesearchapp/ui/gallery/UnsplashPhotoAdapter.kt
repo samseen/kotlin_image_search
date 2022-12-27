@@ -11,8 +11,18 @@ import com.codinginflow.imagesearchapp.R
 import com.codinginflow.imagesearchapp.data.UnsplashPhoto
 import com.codinginflow.imagesearchapp.databinding.ItemUnsplashPhotoBinding
 
-class UnsplashPhotoAdapter : PagingDataAdapter<UnsplashPhoto,
-        UnsplashPhotoAdapter.PhotoViewHolder>(PHOTO_COMPARATOR) {
+class UnsplashPhotoAdapter(private val listener: OnItemClickListener) :
+    PagingDataAdapter<UnsplashPhoto,
+            UnsplashPhotoAdapter.PhotoViewHolder>(PHOTO_COMPARATOR) {
+
+    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): PhotoViewHolder {
+        val binding = ItemUnsplashPhotoBinding.inflate(
+            LayoutInflater.from(parent.context), parent,
+            false
+        )
+
+        return PhotoViewHolder(binding)
+    }
 
     override fun onBindViewHolder(holder: PhotoViewHolder, position: Int) {
 
@@ -23,30 +33,39 @@ class UnsplashPhotoAdapter : PagingDataAdapter<UnsplashPhoto,
         }
     }
 
-    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): PhotoViewHolder {
-        val binding = ItemUnsplashPhotoBinding.inflate(LayoutInflater.from(parent.context), parent,
-        false)
-
-        return PhotoViewHolder(binding)
-    }
-
-    class PhotoViewHolder(private val binding: ItemUnsplashPhotoBinding) :
+    inner class PhotoViewHolder(private val binding: ItemUnsplashPhotoBinding) :
         RecyclerView.ViewHolder(binding.root) {
 
-            fun bind(photo: UnsplashPhoto) {
-                binding.apply {
-                    Glide.with(itemView)
-                        .load(photo.urls.regular)
-                        .centerCrop()
-                        .transition(DrawableTransitionOptions.withCrossFade())
-                        .error(R.drawable.ic_error)
-                        .into(imageView)
-
-                    textViewUserName.text = photo.user.username
-
+        init {
+            binding.root.setOnClickListener {
+                val position = bindingAdapterPosition
+                if (position != RecyclerView.NO_POSITION) {
+                    val item = getItem(position)
+                    if (item != null) {
+                        listener.onItemClick(item)
+                    }
                 }
             }
         }
+
+        fun bind(photo: UnsplashPhoto) {
+            binding.apply {
+                Glide.with(itemView)
+                    .load(photo.urls.regular)
+                    .centerCrop()
+                    .transition(DrawableTransitionOptions.withCrossFade())
+                    .error(R.drawable.ic_error)
+                    .into(imageView)
+
+                textViewUserName.text = photo.user.username
+
+            }
+        }
+    }
+
+    interface OnItemClickListener {
+        fun onItemClick(photo: UnsplashPhoto)
+    }
 
     companion object {
         private val PHOTO_COMPARATOR = object : DiffUtil.ItemCallback<UnsplashPhoto>() {
